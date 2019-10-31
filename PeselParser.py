@@ -66,7 +66,7 @@ def isFemale(pesel):
     return int(pesel[9]) % 2 == 0
 
 
-file = open("1e3.dat", 'r')
+file = open("1e6.dat", 'r')
 
 for PESEL in file:
     PESEL = PESEL.strip()
