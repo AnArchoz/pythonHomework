@@ -5,6 +5,17 @@ PESEL_LENGTH = 11
 PESEL_WEIGHTS = (1, 3, 7, 9, 1, 3, 7, 9, 1, 3)
 
 
+def isLeapYear(yyyy):
+    if yyyy % 400 == 0:
+        return True
+    if yyyy % 100 == 0:
+        return False
+    if yyyy % 4 == 0:
+        return True
+    else:
+        return False
+
+
 def checkSumCorrect(pesel):
     sourceCheckSum = int(pesel[10])
     sum = 0
@@ -21,7 +32,6 @@ def dateIsValid(pesel):
     yyyy = int(pesel[0] + pesel[1])
     mm = int(pesel[2] + pesel[3]) % 20
     dd = int(pesel[4] + pesel[5])
-    leapYear = False
     centuryCheck = int(pesel[2] + pesel[3])
     daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -29,9 +39,6 @@ def dateIsValid(pesel):
         return False
 
     if dd <= 0 or dd > 31:
-        return False
-
-    if dd > daysInMonths[mm - 1]:
         return False
 
     # To find exact year
@@ -46,17 +53,15 @@ def dateIsValid(pesel):
     elif mm == centuryCheck - 60:
         yyyy += 2200
 
-    if 1800 > yyyy > 2300:
+    if yyyy not in range(1800, 2300):
         return False
 
-    # Check for leap year
-    if (yyyy % 4) == 0:
-        if (yyyy % 100) == 0:
-            if (yyyy % 400) == 0:
-                leapYear = True
-
-    if mm == 2:
-        if dd > 28 and leapYear is False:
+    # Check if days correspond to months
+    if dd > daysInMonths[mm - 1]:
+        if mm == 2 and dd <= 29:
+            if isLeapYear(yyyy):
+                return True
+        else:
             return False
 
     return True
