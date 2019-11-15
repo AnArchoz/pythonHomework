@@ -6,11 +6,7 @@ PESEL_WEIGHTS = (1, 3, 7, 9, 1, 3, 7, 9, 1, 3)
 
 
 def isLeapYear(yyyy):
-    if yyyy % 400 == 0:
-        return True
-    if yyyy % 100 == 0:
-        return False
-    if yyyy % 4 == 0:
+    if yyyy % 4 == 0 and not yyyy % 100 == 0 or yyyy % 400 == 0:
         return True
     else:
         return False
@@ -58,9 +54,8 @@ def dateIsValid(pesel):
 
     # Check if days correspond to months
     if dd > daysInMonths[mm - 1]:
-        if mm == 2 and dd <= 29:
-            if isLeapYear(yyyy):
-                return True
+        if mm == 2 and dd <= 29 and isLeapYear(yyyy):
+            return True
         else:
             return False
 
@@ -71,7 +66,7 @@ def isFemale(pesel):
     return int(pesel[9]) % 2 == 0
 
 
-file = open("1e6.dat", 'r')
+file = open("1e3.dat", 'r')
 
 for PESEL in file:
     PESEL = PESEL.strip()
