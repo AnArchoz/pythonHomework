@@ -98,19 +98,15 @@ def main():
 
     global ball
 
-    # Loop condition - will continue running until either a player
-    # scores 3 total goals, or exits by pressing ESC-key
-    continueRunning = True
-
     # Initialise player score to 0
     p1score = 0
     p2score = 0
 
     # Start of game loop
-    while continueRunning:
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT or p1score == 3 or p2score == 3:
-                continueRunning = False
+                exit()
 
         handleKeyEvents(event)
 
