@@ -1,3 +1,6 @@
+"""Created by Antoine Rebelo in November 2019.
+    Single-file remake of Pong.
+    -------------AntoPong V1.0-----------"""
 import pygame
 
 # Define constants and colours
@@ -6,11 +9,11 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 SIZE = (600, 350)
 CENTER_RESET = (300, 250)
-LEFT_PLAYER_POSITION = (75, 175)
-RIGHT_PLAYER_POSITION = (525, 175)
+LEFT_PADDLE_POSITION = (75, 175)
+RIGHT_PADDLE_POSITION = (525, 175)
 LEFT_TEXT_POSITION = (125, 50)
 RIGHT_TEXT_POSITION = (475, 50)
-WELCOME_POSITION = (300, 100)
+WELCOME_TEXT_POSITION = (300, 100)
 
 # Initialise Pygame, set up the window and running conditions
 pygame.init()
@@ -31,15 +34,15 @@ player2 = pygame.Rect.copy(player1)
 VEC = [3, 3]
 
 # Initialise position of ball and player objects
-player2.center = RIGHT_PLAYER_POSITION
-player1.center = LEFT_PLAYER_POSITION
+player2.center = RIGHT_PADDLE_POSITION
+player1.center = LEFT_PADDLE_POSITION
 ball.center = CENTER_RESET
 
 
 def resetPositions():
     """Resets position of all game objects after a goal is scored"""
-    player2.center = RIGHT_PLAYER_POSITION
-    player1.center = LEFT_PLAYER_POSITION
+    player2.center = RIGHT_PADDLE_POSITION
+    player1.center = LEFT_PADDLE_POSITION
     ball.center = CENTER_RESET
     pygame.time.delay(500)
 
@@ -56,7 +59,7 @@ def drawObjects(p1score, p2score):
     welcomeBox = welcomeText.get_rect()
     p1Box = p1ScoreText.get_rect()
     p2Box = p2ScoreText.get_rect()
-    welcomeBox.center = WELCOME_POSITION
+    welcomeBox.center = WELCOME_TEXT_POSITION
     p1Box.center = LEFT_TEXT_POSITION
     p2Box.center = RIGHT_TEXT_POSITION
 
@@ -72,6 +75,8 @@ def drawObjects(p1score, p2score):
 
 
 def handleKeyEvents(event):
+    """Takes a key-event as parameter and assigns it an action in-game.
+        Controls movement of player paddles and exiting out of the game."""
     global player1
     global player2
 
@@ -94,8 +99,8 @@ def handleKeyEvents(event):
 
 
 def main():
-    """Main game loop. Controls movement of all objects and game logic."""
-
+    """Main game loop. Specifies ball physics and controls movement of all in-game.
+        Controls game logic and updates player scores accordingly."""
     global ball
 
     # Initialise player score to 0
