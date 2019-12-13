@@ -1,6 +1,6 @@
 """Created by Antoine Rebelo in November 2019.
     Single-file remake of Pong.
-    -------------AntoPong V1.1-----------"""
+    -------------AntoPong V1.2-----------"""
 import pygame
 
 # Define constants and colours
@@ -28,6 +28,10 @@ font = pygame.font.Font('freesansbold.ttf', 18)
 ball = pygame.Rect(0, 0, 10, 10)
 player1 = pygame.Rect(0, 0, 10, 50)
 player2 = pygame.Rect.copy(player1)
+
+# Initialise player score to 0
+p1score = 0
+p2score = 0
 
 # Movement vector for the ball.
 # Vertical and horizontal movement, and pixels per tick.
@@ -74,7 +78,8 @@ def drawObjects(p1score, p2score):
     fps.tick(60)
 
 
-def handleKeysPressed(keys):
+def movePlayers(keys):
+
     """Takes a key-event as parameter and assigns it an action in-game.
         Controls movement of player paddles and exiting out of the game."""
     global player1
@@ -97,45 +102,41 @@ def handleKeysPressed(keys):
     if keys[pygame.K_ESCAPE]:
         exit()
 
+def moveBall():
+    global ball, p1score, p2score
+    
+# Movement of the ball using the vector
+    ball = ball.move(VEC)
+
+    # Increment score after goal and change direction on kickoff after reset
+    if ball.left < 0:
+        p2score = p2score - -1
+        VEC[0] = -VEC[0]
+        resetPositions()
+
+    if ball.right > win.right:
+        p1score = p1score - -1
+        VEC[0] = -VEC[0]
+        resetPositions()
+
+    # Ball bouncing mechanics
+    if ball.top < 0 or ball.bottom > win.bottom:
+        VEC[1] = -VEC[1]
+    if player2.colliderect(ball) or player1.colliderect(ball):
+        VEC[0] = -VEC[0]
 
 def main():
     """Main game loop. Specifies ball physics and controls movement of all in-game.
         Controls game logic and updates player scores accordingly."""
-    global ball
-
-    # Initialise player score to 0
-    p1score = 0
-    p2score = 0
 
     # Start of game loop
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT or p1score == 3 or p2score == 3:
                 exit()
-                
-            keys_pressed = pygame.key.get_pressed()
-            handleKeysPressed(keys_pressed)
-
-        # Movement of the ball using the vector
-        ball = ball.move(VEC)
-
-        # Increment score after goal and change direction on kickoff after reset
-        if ball.left < 0:
-            p2score = p2score - -1
-            VEC[0] = -VEC[0]
-            resetPositions()
-
-        if ball.right > win.right:
-            p1score = p1score - -1
-            VEC[0] = -VEC[0]
-            resetPositions()
-
-        # Ball bouncing mechanics
-        if ball.top < 0 or ball.bottom > win.bottom:
-            VEC[1] = -VEC[1]
-        if player2.colliderect(ball) or player1.colliderect(ball):
-            VEC[0] = -VEC[0]
-
+            keysPressed = pygame.key.get_pressed()
+            movePlayers(keysPressed)
+        moveBall()
         drawObjects(p1score, p2score)
 
 
