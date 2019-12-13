@@ -1,13 +1,13 @@
 """Created by Antoine Rebelo in November 2019.
     Single-file remake of Pong.
-    -------------AntoPong V1.0-----------"""
+    -------------AntoPong V1.1-----------"""
 import pygame
 
 # Define constants and colours
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
-SIZE = (600, 350)
+SCREENSIZE = (600, 350)
 CENTER_RESET = (300, 250)
 LEFT_PADDLE_POSITION = (75, 175)
 RIGHT_PADDLE_POSITION = (525, 175)
@@ -17,10 +17,10 @@ WELCOME_TEXT_POSITION = (300, 100)
 
 # Initialise Pygame, set up the window and running conditions
 pygame.init()
-screen = pygame.display.set_mode(SIZE)
+screen = pygame.display.set_mode(SCREENSIZE)
 win = screen.get_rect()
 pygame.display.set_caption("Pong")
-pygame.key.set_repeat(10, 60)
+pygame.key.set_repeat(10, 0)
 fps = pygame.time.Clock()
 font = pygame.font.Font('freesansbold.ttf', 18)
 
@@ -53,7 +53,7 @@ def drawObjects(p1score, p2score):
     screen.fill(BLACK)
 
     # Initialise text and update player scores
-    welcomeText = font.render("Best of 3 wins the game. Good luck!", True, WHITE)
+    welcomeText = font.render("Best of 3 wins the game. Good luck", True, WHITE)
     p1ScoreText = font.render("W+S KEYS. Score: " + str(p1score), True, RED)
     p2ScoreText = font.render("UP-DOWN KEYS. Score: " + str(p2score), True, RED)
     welcomeBox = welcomeText.get_rect()
@@ -74,7 +74,7 @@ def drawObjects(p1score, p2score):
     fps.tick(60)
 
 
-def handleKeyEvents(event):
+def handleKeysPressed(keys):
     """Takes a key-event as parameter and assigns it an action in-game.
         Controls movement of player paddles and exiting out of the game."""
     global player1
@@ -82,20 +82,20 @@ def handleKeyEvents(event):
 
     # Amount of pixels the players move every tick
     step = 2
-
-    if event.type == pygame.KEYDOWN:
-        # Key events for player 2
-        if event.key == pygame.K_UP:
-            player2 = player2.move(0, -step)
-        if event.key == pygame.K_DOWN:
-            player2 = player2.move(0, +step)
-        # Key events for player 1
-        if event.key == pygame.K_w:
-            player1 = player1.move(0, -step)
-        if event.key == pygame.K_s:
-            player1 = player1.move(0, +step)
-        if event.key == pygame.K_ESCAPE:
-            exit()
+    
+    # Key handling for player 2
+    if keys[pygame.K_UP]:
+        player2 = player2.move(0, -step)
+    if keys[pygame.K_DOWN]:
+        player2 = player2.move(0, +step)
+    
+    # Key handling for player 1
+    if keys[pygame.K_w]:
+        player1 = player1.move(0, -step)
+    if keys[pygame.K_s]:
+        player1 = player1.move(0, +step)
+    if keys[pygame.K_ESCAPE]:
+        exit()
 
 
 def main():
@@ -112,8 +112,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT or p1score == 3 or p2score == 3:
                 exit()
-
-        handleKeyEvents(event)
+                
+            keys_pressed = pygame.key.get_pressed()
+            handleKeysPressed(keys_pressed)
 
         # Movement of the ball using the vector
         ball = ball.move(VEC)
