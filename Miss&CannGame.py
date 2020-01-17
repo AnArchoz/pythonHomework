@@ -3,6 +3,8 @@ import sys
 
 import pygame
 
+import Resources
+
 # INITIALISE GAME AND WINDOW
 pygame.init()
 window = pygame.display.set_mode((640, 480))
@@ -16,560 +18,20 @@ cann3 = {"file": "Cannibal.png"}
 miss1 = {"file": "Missionary.png"}
 miss2 = {"file": "Missionary.png"}
 miss3 = {"file": "Missionary.png"}
+boat = {"file": "Boat.png"}
 
-# ADD AND SEPARATE ACTORS TO LISTS FOR EASY ACCESS
-ACTORS = [cann1, cann2, cann3, miss1, miss2, miss3]
+# CONSTANTS
+ACTORS = [cann1, cann2, cann3, miss1, miss2, miss3, boat]
 CANNIBALS = [cann1, cann2, cann3]
 MISSIONARIES = [miss1, miss2, miss3]
-
-# INITIAL ACTOR STATE; ALL 6 ACTORS ON THE LEFT SIDE OF THE RIVER
-startLineup = [cann1, cann2, cann3, miss1, miss2, miss3]
-boat = []
-
-# GAME GRAPH TREE WITH ALL PLAYABLE POSSIBILITIES
-# NOT READABLE AND NOT IN ORDER,
-# PLEASE DON'T OPEN FOR LONG PERIODS OF TIME
-gameGraph = {
-    "3, 3, 0, 0, 0": {
-        "c": "3, 2, 0, 0, 0",
-        "m": "2, 3, 0, 0, 0",
-        " ": "3, 3, 1, 0, 0"
-    },
-    "3, 3, 1, 0, 0": {
-        " ": "3, 3, 0, 0, 0"
-    },
-    "3, 2, 0, 0, 0": {
-        "c": "3, 1, 0, 0, 0",
-        "m": "2, 2, 0, 0, 0",
-        "e": "3, 3, 0, 0, 0",
-        " ": "3, 2, 1, 0, 0"
-    },
-    "3, 2, 1, 0, 0": {
-        "e": "3, 2, 1, 0, 1",
-        " ": "3, 2, 0, 0, 0"
-    },
-    "3, 2, 1, 0, 1": {
-        "c": "3, 2, 1, 0, 0",
-        " ": "3, 2, 0, 0, 1",
-    },
-    "3, 2, 0, 0, 1": {
-        "c": "3, 1, 0, 0, 1",
-        "m": "2, 2, 0, 0, 1",
-        " ": "3, 2, 1, 0, 1",
-    },
-    "3, 1, 0, 0, 1": {
-        "c": "3, 0, 0, 0, 1",
-        "m": "2, 1, 0, 0, 1",
-        "e": "3, 2, 0, 0, 1",
-        " ": "3, 1, 1, 0, 1"
-    },
-
-    "3, 1, 1, 0, 1": {
-        "c": "3, 1, 1, 0, 0",
-        " ": "3, 1, 0, 0, 1"
-    },
-
-    "3, 1, 1, 0, 0": {
-        "e": "3, 1, 1, 0, 2",
-        " ": "3, 1, 0, 0, 0"
-    },
-
-    "3, 1, 1, 0, 2": {
-        "c": "3, 1, 1, 0, 1",
-        " ": "3, 1, 0, 0, 2"
-    },
-
-    "3, 1, 0, 0, 2": {
-        "c": "3, 0, 0, 0, 2",
-        "m": "2, 1, 0, 0, 2",
-        " ": "3, 1, 1, 0, 2"
-    },
-
-    "3, 1, 0, 0, 0": {
-        "e": "3, 3, 0, 0, 0",
-        " ": "3, 1, 1, 0, 0"
-    },
-
-    "3, 0, 0, 0, 2": {
-        "m": "2, 0, 0, 0, 2",
-        "e": "3, 1, 0, 0, 2",
-        " ": "3, 0, 1, 0, 2"
-    },
-
-    "3, 0, 1, 0, 2": {
-        "c": "3, 0, 1, 0, 1",
-        "e": "3, 0, 1, 0, 3",
-        " ": "3, 0, 0, 0, 2"
-    },
-
-    "3, 0, 1, 0, 1": {
-        "e": "3, 0, 1, 0, 3",
-        " ": "3, 0, 0, 0, 1"
-    },
-
-    "3, 0, 1, 0, 3": {
-        "c": "3, 0, 1, 0, 2",
-        " ": "3, 0, 0, 0, 3"
-    },
-
-    "3, 0, 0, 0, 3": {
-        "m": "2, 0, 0, 0, 3",
-        " ": "3, 0, 1, 0, 3"
-    },
-
-    "3, 0, 0, 0, 1": {
-        "e": "3, 2, 0, 0, 1",
-        " ": "3, 0, 1, 0, 1"
-    },
-    "2, 3, 0, 0, 0": {
-        "m": "1, 3, 0, 0, 0",
-        "c": "2, 2, 0, 0, 0",
-        "e": "3, 3, 0, 0, 0",
-        " ": "2, 3, 1, 0, 0"  # FAILURE
-    },
-    "2, 2, 0, 0, 0": {
-        "e": "3, 3, 0, 0, 0",
-        " ": "2, 2, 1, 0, 0"
-    },
-
-    "2, 2, 1, 0, 0": {
-        "e": "2, 2, 1, 1, 1",
-        " ": "2, 2, 0, 0, 0"
-    },
-
-    "2, 2, 1, 1, 1": {
-        "c": "2, 2, 1, 1, 0",
-        "m": "2, 2, 1, 0, 1",
-        " ": "2, 2, 0, 1, 1"
-    },
-
-    "2, 2, 0, 1, 1": {
-        "c": "2, 1, 0, 1, 1",
-        "m": "1, 2, 0, 1, 1",
-        " ": "2, 2, 1, 1, 1"
-    },
-
-    "2, 2, 1, 0, 1": {
-        "c": "2, 2, 1, 0, 0",
-        "e": "2, 2, 1, 1, 1",
-        " ": "2, 2, 0, 0, 1"
-    },
-
-    "2, 2, 1, 1, 0": {
-        "m": "2, 2, 1, 0, 0",
-        "e": "2, 2, 1, 1, 1"
-    },
-
-    "2, 2, 0, 0, 1": {
-        "c": "2, 1, 0, 0, 1",
-        "m": "1, 2, 0, 0, 1",
-        "e": "3, 2, 0, 0, 1",
-        " ": "2, 2, 1, 0, 1"
-    },
-
-    "2, 1, 0, 1, 1": {
-        "c": "2, 0, 0, 1, 1",
-        "m": "1, 1, 0, 1, 1",
-        "e": "2, 2, 0, 1, 1",
-        " ": "2, 1, 1, 1, 1"
-    },
-
-    "2, 1, 0, 0, 1": {
-        "e": "3, 2, 0, 0, 1",
-        " ": "2, 1, 1, 0, 1"
-    },
-
-    "2, 1, 0, 0, 2": {
-        "c": "2, 0, 0, 0, 2",
-        "m": "1, 1, 0, 0, 2",
-        "e": "3, 1, 0, 0, 2",
-        " ": "2, 1, 1, 0, 2"
-    },
-
-    "2, 1, 1, 0, 2": {
-        "c": "2, 1, 1, 0, 1",
-        "e": "2, 1, 1, 1, 2",  # FAILURE
-        " ": "2, 1, 0, 0, 2"
-    },
-
-    "2, 1, 1, 0, 1": {
-        "e": "2, 1, 1, 1, 2",  # FAILURE
-        " ": "2, 1, 0, 0, 1"
-    },
-
-    "2, 1, 1, 1, 1": {
-        "c": "2, 1, 1, 1, 0",
-        "m": "2, 1, 1, 0, 1",
-        "e": "2, 1, 1, 1, 2",  # FAILURE
-        " ": "2, 1, 0, 1, 1"
-    },
-
-    "2, 1, 1, 1, 0": {
-        "e": "2, 1, 1, 1, 2",  # FAILURE,
-        " ": "2, 1, 0, 1, 0"
-    },
-
-    "2, 1, 0, 1, 0": {
-        "e": "2, 3, 0, 1, 0",  # FAILURE
-        " ": "2, 1, 1, 1, 0"
-    },
-
-    "2, 0, 0, 1, 1": {
-        "e": "2, 2, 0, 1, 1",
-        " ": "2, 0, 1, 1, 1"
-    },
-
-    "2, 0, 1, 1, 1": {
-        "e": "2, 0, 1, 1, 3",  # FAILURE
-        " ": "2, 0, 0, 1, 1"
-    },
-
-    "2, 0, 0, 0, 3": {
-        "m": "1, 0, 0, 0, 3",
-        "e": "3, 0, 0, 0, 3",
-        " ": "2, 0, 1, 0, 3"
-    },
-
-    "2, 0, 1, 0, 3": {
-        "c": "2, 0, 1, 0, 2",
-        "e": "2, 0, 1, 1, 3",  # FAILURE
-        " ": "2, 0, 0, 0, 3"
-    },
-
-    "2, 0, 1, 0, 2": {
-        "e": "2, 0, 1, 1, 3",  # FAILURE
-        " ": "2, 0, 0, 0, 2"
-    },
-
-    "2, 0, 0, 0, 2": {
-        "e": "3, 1, 0, 0, 2",
-        " ": "2, 0, 1, 0, 2"
-    },
-
-    "1, 3, 0, 0, 0": {
-        "e": "3, 3, 0, 0, 0",
-        " ": "1, 3, 1, 0, 0"  # FAILURE
-    },
-
-    "1, 2, 0, 1, 1": {
-        "m": "0, 2, 0, 1, 1",
-        "c": "1, 1, 0, 1, 1",
-        "e": "2, 2, 0, 1, 1",
-        " ": "1, 2, 1, 1, 1",  # FAILURE
-    },
-
-    "1, 2, 0, 0, 1": {
-        "e": "3, 2, 0, 0, 1",
-        " ": "1, 2, 1, 0, 1"  # FAILURE
-    },
-
-    "1, 1, 0, 1, 1": {
-        "e": "2, 2, 0, 1, 1",
-        " ": "1, 1, 1, 1, 1"
-    },
-
-    "1, 1, 1, 1, 1": {
-        "e": "1, 1, 1, 2, 2",
-        " ": "1, 1, 0, 1, 1"
-    },
-
-    "1, 1, 0, 2, 0": {
-        "e": "1, 3, 0, 2, 0",  # FAILURE
-        " ": "1, 1, 1, 2, 0"
-    },
-
-    "1, 1, 0, 2, 1": {
-        "c": "1, 0, 0, 2, 1",
-        "m": "0, 1, 0, 2, 1",
-        "e": "1, 2, 0, 2, 1"  # FAILURE
-    },
-
-    "1, 1, 1, 2, 0": {
-        "e": "1, 1, 1, 2, 2",
-        " ": "1, 1, 0, 2, 0"
-    },
-
-    "1, 1, 1, 2, 1": {
-        "c": "1, 1, 1, 2, 0",
-        "m": "1, 1, 1, 1, 1",
-        "e": "1, 1, 1, 2, 2",
-        " ": "1, 1, 0, 2, 1"
-    },
-
-    "1, 1, 0, 2, 2": {
-        "c": "1, 0, 0, 2, 2",
-        "m": "0, 1, 0, 2, 2",
-        " ": "1, 1, 1, 2, 2"
-    },
-
-    "1, 1, 0, 0, 2": {
-        "e": "3, 1, 0, 0, 2",
-        " ": "1, 1, 1, 0, 2"
-    },
-
-    "1, 1, 1, 0, 2": {
-        "e": "1, 1, 1, 2, 2",
-        " ": "1, 1, 0, 0, 2"
-    },
-
-    "1, 1, 1, 1, 2": {
-        "c": "1, 1, 1, 1, 1",
-        "m": "1, 1, 1, 0, 2",
-        "e": "1, 1, 1, 2, 2",
-        " ": "1, 1, 0, 1, 2"  # FAILURE
-
-    },
-
-    "1, 1, 1, 2, 2": {
-        "c": "1, 1, 1, 2, 1",
-        "m": "1, 1, 1, 1, 2",
-        " ": "1, 1, 0, 2, 2"
-    },
-
-    "1, 0, 1, 2, 1": {
-        "e": "1, 0, 1, 2, 3",  # FAILURE
-        " ": "1, 0, 0, 2, 1"
-    },
-
-    "1, 0, 1, 1, 2": {
-        "e": "1, 0, 1, 2, 3",  # FAILURE
-        " ": "1, 0, 0, 1, 2"
-    },
-
-    "1, 0, 1, 2, 2": {
-        "c": "1, 0, 1, 2, 1",
-        "m": "1, 0, 1, 1, 2",
-        "e": "1, 0, 1, 2, 3",  # FAILURE
-        " ": "1, 0, 0, 2, 2"
-    },
-
-    "1, 0, 0, 2, 1": {
-        "e": "1, 2, 0, 2, 1",  # FAILURE,
-        " ": "1, 0, 1, 2, 1"
-    },
-
-    "1, 0, 0, 2, 2": {
-        "m": "0, 0, 0, 2, 2",
-        "e": "1, 1, 0, 2, 2",
-        " ": "1, 0, 1, 2, 2"
-    },
-
-    "1, 0, 0, 0, 3": {
-        "e": "3, 0, 0, 0, 3",
-        " ": "1, 0, 1, 0, 3"
-    },
-
-    "1, 0, 1, 0, 3": {
-        "e": "1, 0, 1, 2, 3",  # FAILURE
-        " ": "1, 0, 0, 2, 1"
-    },
-
-    "0, 0, 0, 2, 2": {
-        "e": "1, 1, 0, 2, 2",
-        " ": "0, 0, 1, 2, 2"
-    },
-
-    "0, 0, 1, 2, 2": {
-        "e": "0, 0, 1, 3, 3",  # SUCCESS SUCCESS SUCCESS
-        " ": "0, 0, 0, 2, 2"
-    },
-
-    "0, 1, 0, 2, 1": {
-        "e": "1, 2, 0, 2, 1",  # FAILURE
-        " ": "0, 1, 1, 2, 1"
-    },
-
-    "0, 1, 1, 2, 1": {
-        "e": "0, 1, 1, 3, 2",
-        " ": "0, 1, 0, 2, 1"
-    },
-
-    "0, 1, 0, 2, 2": {
-        "c": "0, 0, 0, 2, 2",
-        "e": "1, 1, 0, 2, 2",
-        " ": "0, 1, 1, 2, 2"
-    },
-
-    "0, 1, 1, 1, 2": {
-        "e": "0, 1, 1, 3, 2",
-        " ": "0, 1, 0, 1, 2"  # FAILURE
-    },
-
-    "0, 1, 1, 2, 2": {
-        "c": "0, 1, 1, 2, 1",
-        "m": "0, 1, 1, 1, 2",
-        "e": "0, 1, 1, 3, 2",
-        " ": "0, 1, 0, 2, 2"
-    },
-
-    "0, 1, 1, 3, 0": {
-        "e": "0, 1, 1, 3, 2",
-        " ": "0, 1, 0, 3, 0"
-    },
-
-    "0, 1, 1, 3, 1": {
-        "c": "0, 1, 1, 3, 0",
-        "m": "0, 1, 1, 2, 1",
-        "e": "0, 1, 1, 3, 2",
-        " ": "0, 1, 0, 3, 1"
-    },
-
-    "0, 1, 1, 3, 2": {
-        "c": "0, 1, 1, 3, 1",
-        "m": "0, 1, 1, 2, 2",
-        " ": "0, 1, 0, 3, 2"
-    },
-
-    "0, 1, 0, 3, 0": {
-        "e": "0, 3, 0, 3, 0",
-        " ": "0, 1, 1, 3, 0"
-    },
-
-    "0, 1, 0, 3, 1": {
-        "c": "0, 0, 0, 3, 1",
-        "e": "0, 2, 0, 3, 1",
-        " ": "0, 1, 1, 3, 1"
-    },
-
-    "0, 1, 0, 3, 2": {
-        "c": "0, 0, 0, 3, 2",
-        " ": "0, 1, 1, 3, 2"
-    },
-
-    "0, 0, 1, 3, 2": {
-        "e": "0, 0, 1, 3, 3",  # SUCCESS SUCCESS SUCCESS
-        " ": "0, 0, 0, 3, 2"
-
-    },
-
-    "0, 0, 0, 3, 2": {
-        "e": "0, 1, 0, 3, 2",
-        " ": "0, 0, 1, 3, 2"
-    },
-
-    "0, 0, 0, 3, 1": {
-        "e": "0, 2, 0, 3, 1",
-        " ": "0, 0, 1, 3, 1"
-    },
-
-    "0, 0, 1, 3, 1": {
-        "e": "0, 0, 1, 3, 3",  # SUCCESS SUCCESS SUCCESS
-        " ": "0, 0, 0, 3, 1"
-    },
-
-    "0, 2, 0, 3, 0": {
-        "c": "0, 1, 0, 3, 0",
-        "e": "0, 3, 0, 3, 0",
-        " ": "0, 2, 1, 3, 0"
-    },
-
-    "0, 2, 0, 1, 1": {
-        "e": "2, 2, 0, 1, 1",
-        " ": "0, 2, 1, 1, 1"
-    },
-
-    "0, 2, 0, 2, 0": {
-        "e": "1, 3, 0, 2, 0",  # FAILURE
-        " ": "0, 2, 1, 2, 0"
-    },
-
-    "0, 2, 0, 2, 1": {
-        "c": "0, 1, 0, 2, 1",
-        "e": "1, 2, 0, 2, 1",  # FAILURE
-        " ": "0, 2, 1, 2, 1"
-    },
-
-    "0, 2, 1, 2, 0": {
-        "e": "0, 2, 1, 3, 1",
-        " ": "0, 2, 0, 2, 0"
-    },
-
-    "0, 2, 1, 2, 1": {
-        "c": "0, 2, 1, 2, 0",
-        "m": "0, 2, 1, 1, 1",
-        "e": "0, 2, 1, 3, 1",
-        " ": "0, 2, 0, 2, 1"
-    },
-
-    "0, 2, 1, 1, 1": {
-        "e": "0, 2, 1, 3, 1",
-        " ": "0, 2, 0, 1, 1"
-    },
-
-    "0, 2, 0, 3, 1": {
-        "c": "0, 1, 0, 3, 1",
-        " ": "0, 2, 1, 3, 1"
-    },
-
-    "0, 2, 1, 3, 0": {
-        "m": "0, 2, 1, 2, 0",
-        "e": "0, 2, 1, 3, 1",
-        " ": "0, 2, 0, 3, 0"
-    },
-
-    "0, 2, 1, 3, 1": {
-        "c": "0, 2, 1, 3, 0",
-        "m": "0, 2, 1, 2, 1",
-        " ": "0, 2, 0, 3, 1"
-    },
-
-    "0, 3, 0, 3, 0": {
-        "c": "0, 2, 0, 3, 0",
-        " ": "0, 3, 1, 3, 0"
-    },
-
-    "0, 3, 0, 1, 0": {
-        "e": "2, 3, 0, 1, 0",  # FAILURE
-        " ": "0, 3, 0, 1, 0"
-    },
-
-    "0, 3, 0, 2, 0": {
-        "c": "0, 2, 0, 2, 0",
-        "e": "1, 3, 0, 2, 0",  # FAILURE
-        " ": "0, 3, 1, 2, 0"
-    },
-
-    "0, 3, 1, 1, 0": {
-        "e": "0, 3, 1, 3, 0",
-        " ": "0, 3, 0, 1, 0"
-    },
-
-    "0, 3, 1, 2, 0": {
-        "m": "0, 3, 1, 1, 0",
-        "e": "0, 3, 1, 3, 0",
-        " ": "0, 3, 0, 2, 0"
-    },
-
-    "0, 3, 1, 3, 0": {
-        "m": "0, 3, 1, 2, 0",
-        " ": "0, 3, 0, 3, 0"
-    },
-
-    "1, 3, 0, 2, 0": "failure",
-    "1, 3, 1, 0, 0": "failure",
-    "1, 3, 1, 2, 0": "failure",
-    "1, 2, 0, 2, 1": "failure",
-    "1, 2, 1, 0, 0": "failure",
-    "1, 2, 1, 1, 1": "failure",
-    "1, 2, 1, 0, 1": "failure",
-    "1, 2, 1, 2, 1": "failure",
-    "1, 1, 0, 1, 2": "failure",
-    "1, 0, 1, 2, 3": "failure",
-    "2, 3, 0, 1, 0": "failure",
-    "2, 3, 1, 1, 0": "failure",
-    "2, 3, 1, 0, 0": "failure",
-    "2, 1, 0, 1, 2": "failure",
-    "2, 1, 1, 1, 2": "failure",
-    "2, 0, 0, 1, 3": "failure",
-    "2, 0, 1, 1, 3": "failure",
-    "1, 0, 0, 2, 3": "failure",
-    "0, 1, 0, 1, 2": "failure",
-
-    "0, 0, 1, 3, 3": "success"
-}
-
-# INITIAL GAME STATE, ALL ACTORS ON THE LEFT SIDE OF THE RIVER
-gameState = "3, 3, 0, 0, 0"
+BOAT_LEFT = (200, 50)
+BOAT_RIGHT = (50, 50)
+
+# COLOUR AND TEXT FOR WELCOME SCREEN
+WHITE = (255, 255, 255)
+WELCOME_TEXT_POSITION = (320, 100)
+WELCOME_TEXT = getattr(Resources, "WELCOME_TEXT")
+FONT = pygame.font.Font('freesansbold.ttf', 18)
 
 # GAME CONTROLS FOR ACTORS AND BOAT
 CONTROLS = {pygame.K_e: "e",  # empty boat
@@ -577,14 +39,22 @@ CONTROLS = {pygame.K_e: "e",  # empty boat
             pygame.K_m: "m",  # add missionary
             pygame.K_c: "c"}  # add cannibal
 
-# ~~~~~~~ UNSURE IF I WILL USE, KEEP FOR NOW ~~~~~~~~
-passenger = {"c": [random.choice(CANNIBALS)],
-             "m": [random.choice(MISSIONARIES)],
-             "e": [],
-             " ": []}
-
 # PIXEL MOVEMENT OF BOAT WITH PASSENGERS
 FERRY_STEP = -5
+
+# INITIAL ACTOR STATE; ALL 6 ACTORS ON THE LEFT SIDE OF THE RIVER
+startLineup = [[cann1, cann2, cann3], [miss1, miss2, miss3, boat]]
+otherSide = [[], []]
+
+# HAHA OVER-THINKING LEADS TO FUNNY THINGS
+ferry = [boat]
+
+# GAME GRAPH TREE WITH ALL PLAYABLE POSSIBILITIES
+# NOT VERY READABLE AND NOT IN ORDER,
+gameGraph = getattr(Resources, "graph")
+
+# INITIAL GAME STATE, ALL ACTORS ON THE LEFT SIDE OF THE RIVER
+gameState = "3, 3, 0, 0, 0"
 
 
 def getKey():
@@ -595,38 +65,131 @@ def getKey():
             # pygame.image.save(window, "game-over.bmp")
             sys.exit()
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RETURN:
+            if event.key == pygame.K_ESCAPE:
                 sys.exit()
             if event.key in CONTROLS:
                 key = CONTROLS[event.key]
                 return key
 
 
-# TODO: WRITE FUNCTION
 def handleKeys(key):
     """Executes an action according to each keypress:
         Ferry, empty, or fill the boat."""
-    pass
+
+    global gameState
+    global ferry
+
+    if key in gameGraph[gameState]:
+        if key == "c" or key == "m":
+            if len(ferry) < 3:
+                fillBoat(key)
+            else:
+                return
+        elif key == " ":
+            if len(ferry) > 1:
+                moveBoat(ferry)
+        elif key == "e":
+            emptyBoat()
+
+        gameState = gameGraph[gameState][key]
+        print(gameState)
+
+    if gameGraph[gameState] == "failure":
+        action = "failure"
+    elif gameGraph[gameState] == "success":
+        action = "success"
+    else:
+        action = "listen"
+
+    return action
 
 
-# TODO: WRITE FUNCTION
+def fillBoat(key):
+    """Add either a cannibal or missionary to the boat
+        for a maximum of 2 passengers"""
+    global ferry
+
+    if key == "c":
+        if boat in startLineup:
+            if any(cannibal in startLineup[0] for cannibal in CANNIBALS):
+                cann = random.choice(startLineup[0])
+                startLineup[0].remove(cann)
+                ferry.append(cann)
+        elif boat in otherSide:
+            if any(cannibal not in startLineup[0]
+                   and cannibal not in ferry
+                   for cannibal in CANNIBALS):
+                cann = random.choice(otherSide[0])
+                otherSide[0].remove(cann)
+                ferry.append(cann)
+
+    elif key == "m":
+        if boat in startLineup:
+            if any(missionary in startLineup[1] for missionary in MISSIONARIES):
+                miss = random.choice(startLineup[1])
+                startLineup[1].remove(miss)
+                ferry.append(miss)
+        elif boat in otherSide:
+            if any(missionary not in startLineup[1]
+                   and missionary not in ferry
+                   for missionary in MISSIONARIES):
+                miss = random.choice(otherSide[1])
+                otherSide[1].remove(miss)
+                ferry.append(miss)
+
+
+def emptyBoat():
+    """Unloads all passengers from the boat
+        onto either of the two sides."""
+    if boat in startLineup:
+        for actor in ferry:
+            if actor is not boat:
+                if actor in CANNIBALS:
+                    startLineup[0].append(actor)
+                elif actor in MISSIONARIES:
+                    startLineup[1].append(actor)
+
+                ferry.remove(actor)
+    else:
+        for actor in ferry:
+            if actor is not boat:
+                if actor in CANNIBALS:
+                    otherSide[0].append(actor)
+                elif actor in MISSIONARIES:
+                    otherSide[0].append(actor)
+
+                ferry.remove(actor)
+
+
 def drawWelcomeScreen():
     """Displays welcome text and instructions"""
-    pass
+    welcomeText = FONT.render(WELCOME_TEXT, True, WHITE)
+    welcomeBox = welcomeText.get_rect()
+    welcomeBox.center = WELCOME_TEXT_POSITION
+    window.blit(welcomeText, welcomeBox)
 
 
-def ferry(who, step):
+def moveBoat(passengers):
     """Moves the boat across the river
         containing between one or two passengers."""
-    # TODO: REMAKE FUNCTION
-    done = False
-    for actor in who:
-        actor["rect"] = actor["rect"].move((step, 0))
-        if not arena.contains(actor["rect"]):
-            actor["rect"] = actor["rect"].move((-step, 0))
+    for actor in passengers:
+        if boat in startLineup:
+            while actor["rect"].center is not BOAT_RIGHT[0]:
+                actor["rect"] = actor["rect"].move((FERRY_STEP, 0))
+
+            startLineup[1].remove(boat)
+            otherSide[1].append(boat)
             actor["surf"] = pygame.transform.flip(actor["surf"], True, False)
-            done = True
-    return done
+        else:
+            while actor["rect"].center is not BOAT_LEFT[0]:
+                actor["rect"] = actor["rect"].move((-FERRY_STEP, 0))
+
+            otherSide[1].remove(boat)
+            startLineup[1].append(boat)
+            actor["surf"] = pygame.transform.flip(actor["surf"], True, False)
+
+        window.blit(actor["surf"], actor["rect"])
+        pygame.display.flip()
 
 
 def failure():
@@ -638,7 +201,7 @@ def failure():
     msg_box.center = arena.center
     window.blit(msg, msg_box)
     pygame.display.flip()
-    pygame.time.wait(1000)
+    pygame.time.wait(2000)
 
 
 def success():
@@ -651,7 +214,7 @@ def success():
     msg_box.center = arena.center
     window.blit(msg, msg_box)
     pygame.display.flip()
-    pygame.time.wait(1000)
+    pygame.time.wait(2000)
 
 
 def drawactors():
@@ -666,7 +229,6 @@ def drawactors():
 def main():
     """Main game function, contains initialisations, game loop and logic."""
     global gameState
-    global FERRY_STEP
 
     # CONTROLLER VARIABLE FOR GAME
     action = "listen"
@@ -674,20 +236,10 @@ def main():
     # INITIALISE ACTORS WITH IMAGES
     drawactors()
 
-    # TODO REBUILD LOOP WITH NEW ACTION SYSTEM
     while True:
         if action == "listen":
             key = getKey()
-            if key in gameGraph[gameState]:
-                handleKeys(key)
-                gameState = gameGraph[gameState][key]
-
-            if gameGraph[gameState] == "failure":
-                action = "failure"
-            elif gameGraph[gameState] == "success":
-                action = "success"
-            else:
-                action = "listen"
+            action = handleKeys(key)
 
         if action == "failure":
             failure()
@@ -698,9 +250,11 @@ def main():
             sys.exit()
 
         window.fill(pygame.Color("green"))
+
         for actor in ACTORS:
             window.blit(actor["surf"], actor["rect"])
 
+        # drawWelcomeScreen()
         pygame.display.flip()
         fpsClock.tick(120)
 
