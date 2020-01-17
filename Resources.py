@@ -525,12 +525,23 @@ graph = {
 
 "Welcome text for the game."
 # TODO: BREAK UP INTO MULTIPLE LINES
-WELCOME_TEXT = "Welcome to Missionaries and Cannibals! Your controls are: " \
-               "\nC-button: Place a cannibal inside the boat." \
-               "\nM-button: Place a missionary inside the boat." \
-               "\nSpace bar: Move the boat from one side to another - requires" \
-               "at least one passenger inside the boat to control!" \
-               "\nThe goal of the game is to transport all 6 characters to the other" \
-               "side of the river without the missionaries ever being out-numbered" \
-               "on any of the sides: then they will be eaten." \
-               "\n Good luck!"
+# ~ WELCOME_TEXT = "Welcome to Missionaries and Cannibals! Your controls are: " \
+               # ~ "\nC-button: Place a cannibal inside the boat." \
+               # ~ "\nM-button: Place a missionary inside the boat." \
+               # ~ "\nSpace bar: Move the boat from one side to another - requires" \
+               # ~ "at least one passenger inside the boat to control!" \
+               # ~ "\nThe goal of the game is to transport all 6 characters to the other" \
+               # ~ "side of the river without the missionaries ever being out-numbered" \
+               # ~ "on any of the sides: then they will be eaten." \
+               # ~ "\n Good luck!"
+               
+WELCOME_TEXT = \
+"""Welcome to Missionaries and Cannibals! Your controls are:
+C-button: Place a cannibal inside the boat.
+M-button: Place a missionary inside the boat.
+Space bar: Move the boat from one side to another - requires
+at least one passenger inside the boat to control!
+The goal of the game is to transport all 6 characters to the other
+side of the river without the missionaries ever being out-numbered
+on any of the sides: then they will be eaten.
+Good luck!"""

@@ -43,18 +43,20 @@ CONTROLS = {pygame.K_e: "e",  # empty boat
 FERRY_STEP = -5
 
 # INITIAL ACTOR STATE; ALL 6 ACTORS ON THE LEFT SIDE OF THE RIVER
-startLineup = [[cann1, cann2, cann3], [miss1, miss2, miss3, boat]]
-otherSide = [[], []]
+startLineup = [[cann1, cann2, cann3], [miss1, miss2, miss3], [boat]]
+otherSide = [[], [], []]
 
 # HAHA OVER-THINKING LEADS TO FUNNY THINGS
 ferry = [boat]
 
 # GAME GRAPH TREE WITH ALL PLAYABLE POSSIBILITIES
-# NOT VERY READABLE AND NOT IN ORDER,
+# NOT VERY READABLE AND NOT FULLY IN ORDER,
 gameGraph = getattr(Resources, "graph")
 
 # INITIAL GAME STATE, ALL ACTORS ON THE LEFT SIDE OF THE RIVER
 gameState = "3, 3, 0, 0, 0"
+
+action = ""
 
 
 def getKey():
@@ -78,7 +80,8 @@ def handleKeys(key):
 
     global gameState
     global ferry
-
+    global action
+    
     if key in gameGraph[gameState]:
         if key == "c" or key == "m":
             if len(ferry) < 3:
@@ -86,11 +89,13 @@ def handleKeys(key):
             else:
                 return
         elif key == " ":
+            print(ferry)
             if len(ferry) > 1:
-                moveBoat(ferry)
+                action = "ferry"
         elif key == "e":
             emptyBoat()
 
+        print(action)
         gameState = gameGraph[gameState][key]
         print(gameState)
 
@@ -98,10 +103,6 @@ def handleKeys(key):
         action = "failure"
     elif gameGraph[gameState] == "success":
         action = "success"
-    else:
-        action = "listen"
-
-    return action
 
 
 def fillBoat(key):
@@ -110,12 +111,12 @@ def fillBoat(key):
     global ferry
 
     if key == "c":
-        if boat in startLineup:
+        if boat in startLineup[2]:
             if any(cannibal in startLineup[0] for cannibal in CANNIBALS):
                 cann = random.choice(startLineup[0])
                 startLineup[0].remove(cann)
                 ferry.append(cann)
-        elif boat in otherSide:
+        else:
             if any(cannibal not in startLineup[0]
                    and cannibal not in ferry
                    for cannibal in CANNIBALS):
@@ -124,12 +125,12 @@ def fillBoat(key):
                 ferry.append(cann)
 
     elif key == "m":
-        if boat in startLineup:
+        if boat in startLineup[2]:
             if any(missionary in startLineup[1] for missionary in MISSIONARIES):
                 miss = random.choice(startLineup[1])
                 startLineup[1].remove(miss)
                 ferry.append(miss)
-        elif boat in otherSide:
+        else:
             if any(missionary not in startLineup[1]
                    and missionary not in ferry
                    for missionary in MISSIONARIES):
@@ -144,21 +145,22 @@ def emptyBoat():
     if boat in startLineup:
         for actor in ferry:
             if actor is not boat:
+                ferry.remove(actor)
+                
                 if actor in CANNIBALS:
                     startLineup[0].append(actor)
                 elif actor in MISSIONARIES:
                     startLineup[1].append(actor)
 
-                ferry.remove(actor)
     else:
         for actor in ferry:
             if actor is not boat:
+                ferry.remove(actor)
+                
                 if actor in CANNIBALS:
                     otherSide[0].append(actor)
                 elif actor in MISSIONARIES:
                     otherSide[0].append(actor)
-
-                ferry.remove(actor)
 
 
 def drawWelcomeScreen():
@@ -172,24 +174,27 @@ def drawWelcomeScreen():
 def moveBoat(passengers):
     """Moves the boat across the river
         containing between one or two passengers."""
-    for actor in passengers:
-        if boat in startLineup:
-            while actor["rect"].center is not BOAT_RIGHT[0]:
-                actor["rect"] = actor["rect"].move((FERRY_STEP, 0))
+    done = False
+    if boat in startLineup[2]:
+        for actor in passengers:
+            actor["rect"] = actor["rect"].move((FERRY_STEP, 0))
 
-            startLineup[1].remove(boat)
-            otherSide[1].append(boat)
             actor["surf"] = pygame.transform.flip(actor["surf"], True, False)
-        else:
-            while actor["rect"].center is not BOAT_LEFT[0]:
-                actor["rect"] = actor["rect"].move((-FERRY_STEP, 0))
+            done = True
+        
+        startLineup[2].remove(boat)
+        otherSide[2].append(boat)
+    else:
+        for actor in passengers:
+            actor["rect"] = actor["rect"].move((-FERRY_STEP, 0))
 
-            otherSide[1].remove(boat)
-            startLineup[1].append(boat)
             actor["surf"] = pygame.transform.flip(actor["surf"], True, False)
-
-        window.blit(actor["surf"], actor["rect"])
-        pygame.display.flip()
+            done = True
+        
+        otherSide[2].remove(boat)
+        startLineup[2].append(boat)
+        
+    return done
 
 
 def failure():
@@ -201,7 +206,7 @@ def failure():
     msg_box.center = arena.center
     window.blit(msg, msg_box)
     pygame.display.flip()
-    pygame.time.wait(2000)
+    pygame.time.wait(5000)
 
 
 def success():
@@ -214,7 +219,7 @@ def success():
     msg_box.center = arena.center
     window.blit(msg, msg_box)
     pygame.display.flip()
-    pygame.time.wait(2000)
+    pygame.time.wait(5000)
 
 
 def drawactors():
@@ -229,6 +234,7 @@ def drawactors():
 def main():
     """Main game function, contains initialisations, game loop and logic."""
     global gameState
+    global action
 
     # CONTROLLER VARIABLE FOR GAME
     action = "listen"
@@ -237,9 +243,18 @@ def main():
     drawactors()
 
     while True:
+        
+        print(action)
+        
         if action == "listen":
             key = getKey()
-            action = handleKeys(key)
+            if key is not None:
+                handleKeys(key)
+        
+        if action == "ferry":
+            done = moveBoat(ferry)
+            if done:
+                action = "listen"
 
         if action == "failure":
             failure()
@@ -254,7 +269,7 @@ def main():
         for actor in ACTORS:
             window.blit(actor["surf"], actor["rect"])
 
-        # drawWelcomeScreen()
+        drawWelcomeScreen()
         pygame.display.flip()
         fpsClock.tick(120)
 
