@@ -45,9 +45,9 @@ for i in range(9):
     filename = 'regularExplosion0{}.png'.format(i)
     img = pygame.image.load(path.join(imgDir, filename)).convert()
     img.set_colorkey(BLACK)
-    imgLarge = pygame.transform.scale(img, (75,75))
+    imgLarge = pygame.transform.scale(img, (75, 75))
     explosionAnimation['large'].append(imgLarge)
-    imgSmall = pygame.transform.scale(img, (32,32))
+    imgSmall = pygame.transform.scale(img, (32, 32))
     explosionAnimation['small'].append(imgSmall)
 
 # Load sound files
@@ -57,9 +57,11 @@ deathSound = pygame.mixer.Sound(path.join(soundDir, "Explosion.wav"))
 # Win/Lose conditions, score counter and level counter
 level = 1
 score = 0
+bounty = 15
 running = False
 victory = False
 failure = False
+
 
 # Classes representing all actor- and projectile objects
 class Player(pygame.sprite.Sprite):
@@ -71,7 +73,7 @@ class Player(pygame.sprite.Sprite):
         # Call superclass from Sprite
         pygame.sprite.Sprite.__init__(self)
         # Scales the image down
-        self.image = pygame.transform.scale(playerImage, (45,35))
+        self.image = pygame.transform.scale(playerImage, (45, 35))
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = CENTER_RESET
@@ -79,7 +81,7 @@ class Player(pygame.sprite.Sprite):
         # Delay for autofire so you can't laserbeam-spam
         self.delay = 300
         self.lastShot = pygame.time.get_ticks()
-        # Timer for briefly hiding yourself when you lose a life
+        # Timer and check for hiding yourself when you lose a life
         self.hidden = False
         self.hideTimer = pygame.time.get_ticks()
         self.lives = 3
@@ -104,7 +106,6 @@ class Player(pygame.sprite.Sprite):
             self.rect.right = SIZE[0]
         elif self.rect.left < 0:
             self.rect.left = 0
-
 
     def shoot(self):
         """Method for shooting a small bullet
@@ -134,20 +135,19 @@ class Alien(pygame.sprite.Sprite):
     # Constructor for alien class
     def __init__(self, x, y, level):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(alienImage, (30,25))
+        self.image = pygame.transform.scale(alienImage, (30, 25))
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         # Randomise speed so all aliens move differently
-        speed = random.choice([(-2,-1),(1,2)])
+        speed = random.choice([(-2, -1), (1, 2)])
         # Have to skip 0 so they don't stand still
         self.speedVector = [random.randint(*speed) * level, 35]
         self.rect.centerx = x
         self.rect.centery = y
         # Randomised autofire delay so all shoot differently
         # and also so no one has laserbeams
-        self.delay = random.randint(500,2000) + random.randint(500, 7000)
+        self.delay = random.randint(500, 2000) + random.randint(500, 7000)
         self.lastShot = pygame.time.get_ticks()
-
 
     def shoot(self):
         """Identical shooting method as the player"""
@@ -161,7 +161,6 @@ class Alien(pygame.sprite.Sprite):
             alienBullets.add(bullet)
             # PEW PEW
             shootSound.play()
-
 
     def update(self):
         # Move downwards a few pixels when they
@@ -188,7 +187,6 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.centerx = x
         self.speedy = speed
 
-
     def update(self):
         self.rect.y += self.speedy
 
@@ -212,7 +210,6 @@ class alienBullet(pygame.sprite.Sprite):
         self.rect.bottom = y
         self.rect.centerx = x
         self.speedy = speed
-
 
     def update(self):
         self.rect.y += self.speedy
@@ -249,7 +246,7 @@ class Explosion(pygame.sprite.Sprite):
         if now - self.lastUpdate > self.frameRate:
             self.lastUpdate = now
             self.frame += 1
-            if self.frame== len(explosionAnimation[self.size]):
+            if self.frame == len(explosionAnimation[self.size]):
                 # Boom
                 self.kill()
             else:
@@ -315,7 +312,8 @@ def showVictory():
     """Text to show when you win."""
     FONT = pygame.font.Font('freesansbold.ttf', 35)
     screen.blit(background, (0, 0))
-    victoryText = FONT.render("You have VICTORY! Final score: " + str(score), True, GREEN)
+    victoryText = FONT.render("You have VICTORY! \
+                            Final score: " + str(score), True, GREEN)
     victoryBox = victoryText.get_rect()
     victoryBox.center = (window.width/2, window.height/2)
     screen.blit(victoryText, victoryBox)
@@ -328,8 +326,10 @@ def showWelcome():
     FONT = pygame.font.Font('freesansbold.ttf', 20)
     screen.blit(background, (0, 0))
     welcomeText = FONT.render("Welcome to Space Invaders!", True, WHITE)
-    controlText = FONT.render("Control your spaceship with left & right keys, shoot with Spacebar.", True, WHITE)
-    levelText = FONT.render("There are 3 waves of dangerous aliens to beat. Good luck!", True, WHITE)
+    controlText = FONT.render("Control your spaceship with left \
+                        & right keys, shoot with Spacebar.", True, WHITE)
+    levelText = FONT.render("There are 3 waves of dangerous aliens to beat.\
+                                        Good luck!", True, WHITE)
     continueText = FONT.render("Press SPACE to begin the game!", True, WHITE)
 
     welcomeBox = welcomeText.get_rect()
@@ -339,7 +339,7 @@ def showWelcome():
 
     welcomeBox.center = (window.width/2, window.height/2)
     levelBox.center = (window.width/2, window.height/2 + 50)
-    controlBox.center =(window.width/2, window.height/2 + 25)
+    controlBox.center = (window.width/2, window.height/2 + 25)
     continueBox.center = (window.width/2, window.height/2 + 75)
     screen.blit(welcomeText, welcomeBox)
     screen.blit(controlText, controlBox)
@@ -463,8 +463,8 @@ def main():
         hits = pygame.sprite.groupcollide(bullets, enemies, True, True)
         for hit in hits:
             deathSound.play()
-            # 15 points per alien times the current level
-            updateScore(15*level)
+            # 15 points per alien, times the current level
+            updateScore(bounty * level)
             expl = Explosion(hit.rect.center, 'small')
             allSprites.add(expl)
             if not enemies:
@@ -478,7 +478,11 @@ def main():
                 resetGame()
 
         # If enemies reach the player, you instantly lose
-        collision = pygame.sprite.groupcollide(playerGroup, enemies, True, True, pygame.sprite.collide_circle)
+        collision = pygame.sprite.groupcollide(
+                                        playerGroup,
+                                        enemies,
+                                        True, True,
+                                        pygame.sprite.collide_circle)
         if collision:
             deathSound.play()
             expl = Explosion(hit.rect.center, 'large')
@@ -487,7 +491,11 @@ def main():
 
         # If player is hit by enemy bullets your HP is decreased
         # starting from 3 to 0, then you explode and lose
-        shotDown = pygame.sprite.groupcollide(playerGroup, alienBullets, False, True, pygame.sprite.collide_circle)
+        shotDown = pygame.sprite.groupcollide(playerGroup, alienBullets,
+                                              False,
+                                              True,
+                                              pygame.sprite.collide_circle
+                                              )
         for hit in shotDown:
             deathSound.play()
             expl = Explosion(hit.rect.center, 'large')
